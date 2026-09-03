@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Бюджет</title>
+<style>
+/* ===== ПЕРЕМЕННЫЕ ===== */
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #232736;
+  --border: #2e3347;
+  --text: #e4e6f0;
+  --text2: #8b8fa8;
+  --accent: #6c5ce7;
+  --accent2: #a29bfe;
+  --green: #00b894;
+  --green-bg: rgba(0,184,148,0.12);
+  --red: #e17055;
+  --red-bg: rgba(225,112,85,0.12);
+  --yellow: #fdcb6e;
+  --yellow-bg: rgba(253,203,110,0.12);
+  --blue: #74b9ff;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ===== НАВИГАЦИЯ ===== */
+.nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-inner::-webkit-scrollbar { display:none; }
+.nav-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent2);
+  margin-right: 16px;
+  white-space: nowrap;
+  padding: 12px 0;
+}
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active {
+  color: var(--accent2);
+  border-bottom-color: var(--accent);
+}
+
+/* ===== КОНТЕЙНЕР ===== */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== КАРТОЧКИ ===== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 13px;
+}
+
+/* ===== СТАТИСТИКА ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.stat-label { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
+.stat-value { font-size: 28px; font-weight: 700; }
+.stat-value.income { color: var(--green); }
+.stat-value.expense { color: var(--red); }
+.stat-value.balance { color: var(--accent2); }
+.stat-value.limit-warn { color: var(--yellow); }
+.stat-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+/* ===== ФОРМЫ ===== */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.form-row.single { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 13px; color: var(--text2); }
+input, select, textarea {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+select option { background: var(--surface2); color: var(--text); }
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #5a4bd4; }
+.btn-success { background: var(--green); color: white; }
+.btn-success:hover { background: #00a381; }
+.btn-danger { background: var(--red); color: white; }
+.btn-danger:hover { background: #c9604a; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text2);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--text); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ===== ТАБЛИЦА ===== */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+tr:hover td { background: var(--surface2); }
+.amount-in { color: var(--green); font-weight: 600; }
+.amount-out { color: var(--red); font-weight: 600; }
+
+/* ===== БЕЙДЖИ ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-income { background: var(--green-bg); color: var(--green); }
+.badge-expense { background: var(--red-bg); color: var(--red); }
+.badge-warn { background: var(--yellow-bg); color: var(--yellow); }
+
+/* ===== ГРАФИКИ (CSS) ===== */
+.chart-bar-container { display: flex; flex-direction: column; gap: 8px; }
+.chart-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.chart-bar-label {
+  width: 120px;
+  font-size: 13px;
+  text-align: right;
+  flex-shrink: 0;
+  color: var(--text2);
+}
+.chart-bar-track {
+  flex: 1;
+  height: 24px;
+  background: var(--surface2);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.chart-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+.chart-bar-value {
+  width: 90px;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.chart-bar-limit {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: var(--yellow);
+  z-index: 2;
+}
+
+/* ===== ПРОГРЕСС ЛИМИТОВ ===== */
+.limit-progress {
+  background: var(--surface2);
+  border-radius: 6px;
+  height: 8px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.limit-progress-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.5s;
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* ===== УВЕДОМЛЕНИЯ ===== */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  z-index: 300;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ===== ФИЛЬТРЫ ===== */
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filters select, .filters input {
+  width: auto;
+  min-width: 140px;
+}
+
+/* ===== МЕСЯЧНЫЙ ОБЗОР ===== */
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.month-cell {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.month-cell:hover { border-color: var(--accent); }
+.month-cell.active { border-color: var(--accent); background: rgba(108,92,231,0.1); }
+.month-name { font-size: 13px; color: var(--text2); }
+.month-amount { font-size: 16px; font-weight: 700; margin-top: 4px; }
+
+/* ===== SYNC СЕКЦИЯ ===== */
+.sync-section {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.sync-id {
+  background: var(--surface2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--accent2);
+  user-select: all;
+}
+
+/* ===== ПУСТОЕ СОСТОЯНИЕ ===== */
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text2);
+}
+.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+.empty-text { font-size: 15px; }
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 768px) {
+  .form-row { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 22px; }
+  .chart-bar-label { width: 80px; font-size: 11px; }
+  .chart-bar-value { width: 70px; font-size: 12px; }
+  .nav-title { font-size: 16px; margin-right: 8px; }
+  .filters { flex-direction: column; }
+  .filters select, .filters input { width: 100%; }
+  .hide-mobile { display: none; }
+
+  /* Кнопки крупнее для пальцев */
+  .btn { padding: 14px 24px; font-size: 16px; min-height: 48px; width: 100%; justify-content: center; }
+  .btn-sm { padding: 12px 16px; font-size: 14px; min-height: 44px; }
+  .btn-group { flex-direction: column; }
+
+  /* Поля ввода крупнее */
+  input, select, textarea { padding: 14px 14px; font-size: 16px; min-height: 48px; }
+  .form-group label { font-size: 14px; margin-bottom: 2px; }
+
+  /* Навигация: кнопки крупнее */
+  .nav-btn { padding: 14px 14px; font-size: 15px; }
+  .nav { padding: 0 8px; }
+
+  /* Таблицы: ячейки крупнее */
+  th { padding: 10px 8px; font-size: 11px; }
+  td { padding: 12px 8px; font-size: 13px; }
+
+  /* Двухколоночный layout на дашборде в одну колонку */
+  div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Модалка на весь экран */
+  .modal { max-width: 100%; border-radius: 8px; padding: 20px 16px; }
+  .modal-overlay { padding: 8px; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .container { padding: 12px 6px; }
+  .card { padding: 12px; }
+
+  /* Ещё крупнее для маленьких экранов */
+  .btn { padding: 16px 24px; font-size: 17px; min-height: 52px; border-radius: 10px; }
+  .btn-sm { padding: 14px 16px; font-size: 15px; min-height: 48px; }
+  input, select, textarea { padding: 16px 14px; font-size: 17px; min-height: 52px; border-radius: 10px; }
+  .nav-btn { padding: 14px 10px; font-size: 13px; }
+  .nav-title { font-size: 15px; }
+  .stat-card { padding: 16px; }
+  .stat-label { font-size: 12px; }
+  .stat-value { font-size: 20px; }
+  .card-title { font-size: 12px; }
+
+  /* Кнопки редактирования/удаления в таблице */
+  td .btn-sm { min-height: 40px; min-width: 40px; padding: 8px; }
+}
+
+/* ===== ОТСЫЛКИ ===== */
+.love-banner {
+  background: linear-gradient(135deg, rgba(108,92,231,0.15), rgba(253,121,168,0.15));
+  border: 1px solid rgba(253,121,168,0.25);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--accent2);
+  animation: lovePulse 3s ease-in-out infinite;
+}
+.love-banner span { color: #fd79a8; font-weight: 600; }
+@keyframes lovePulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+.love-footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--text2);
+  opacity: 0.6;
+}
+
+/* ===== ПАСХАЛКИ ===== */
+.nav-title { cursor: pointer; position: relative; }
+.nav-title::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #fd79a8;
+  transition: width 0.8s;
+}
+.nav-title:hover::after { width: 100%; }
+
+/* Скрытая страница */
+#page-love {
+  text-align: center;
+  padding-top: 40px;
+}
+.love-page-heart {
+  font-size: 80px;
+  animation: heartBeat 1.2s ease-in-out infinite;
+  display: inline-block;
+  user-select: none;
+}
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.15); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.1); }
+}
+.love-page-text {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fd79a8, #a29bfe, #fd79a8);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 3s ease infinite;
+  margin: 20px 0;
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.love-page-sub {
+  color: var(--text2);
+  font-size: 14px;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+.love-page-sub p {
+  margin-bottom: 8px;
+  opacity: 0;
+  animation: fadeInUp 0.6s forwards;
+}
+.love-page-sub p:nth-child(1) { animation-delay: 0.3s; }
+.love-page-sub p:nth-child(2) { animation-delay: 0.6s; }
+.love-page-sub p:nth-child(3) { animation-delay: 0.9s; }
+.love-page-sub p:nth-child(4) { animation-delay: 1.2s; }
+.love-page-sub p:nth-child(5) { animation-delay: 1.5s; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Плавающие сердечки */
+.floating-heart {
+  position: fixed;
+  font-size: 20px;
+  pointer-events: none;
+  z-index: 999;
+  animation: floatUp 3s ease-out forwards;
+  opacity: 0;
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(0.5) rotate(0deg); }
+  50% { opacity: 0.8; transform: translateY(-200px) scale(1) rotate(20deg); }
+  100% { opacity: 0; transform: translateY(-400px) scale(0.3) rotate(-10deg); }
+}
+
+/* Скрытый текст при выделении */
+.secret-select {
+  color: transparent;
+  font-size: 1px;
+  user-select: all;
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+}
+.secret-select::selection {
+  color: #fd79a8;
+  background: var(--surface2);
+  font-size: 11px;
+}
+
+/* Курсор-сердечко на скрытой странице */
+#page-love { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'><text y='15' font-size='15'>&#x2764;</text></svg>") 10 10, auto; }
+
+/* Пасхалка: скрытое сообщение в скроллбаре */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: #fd79a8; }
+
+/* Пасхалка: при долгом наведении на футер */
+.love-footer {
+  transition: all 1s;
+}
+.love-footer:hover {
+  opacity: 1 !important;
+  color: #fd79a8;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+/* Пасхалка: скрытая надпись в placeholder */
+/* Видна только когда поле пустое */
+
+/* Пасхалка: матрица сердечек */
+.matrix-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 998;
+  opacity: 0.7;
+}
+
+/* Пасхалка: конфетти */
+.confetti {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  animation: confettiFall 3s linear forwards;
+}
+@keyframes confettiFall {
+  0% { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+}
+
+/* Пасхалка: радуга на секретной странице */
+.rainbow-text {
+  background: linear-gradient(to right, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rainbowMove 2s linear infinite;
+}
+@keyframes rainbowMove {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+/* Пасхалка: мерцание звёзд */
+.star {
+  position: fixed;
+  pointer-events: none;
+  z-index: 997;
+  color: #ffeaa7;
+  animation: twinkle 2s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Пасхалка: тень-сердечко у карточек при наведении */
+.card:hover {
+  box-shadow: 0 0 0 1px var(--border), 0 4px 20px rgba(253,121,168,0.08);
+}
+
+/* Пасхалка: 14 февраля стиль */
+.valentine-mode .nav { background: linear-gradient(135deg, #1a1015, #1a1520); }
+.valentine-mode .love-banner { background: linear-gradient(135deg, rgba(253,121,168,0.25), rgba(225,112,85,0.2)); }
+.valentine-mode .btn-primary { background: #e84393; }
+.valentine-mode .nav-title { color: #fd79a8 !important; }
+</style>
+</head>
+<body>
+
+<!-- НАВИГАЦИЯ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-title" id="nav-title" onclick="easterTitle()">Бюджет</span>
+    <button class="nav-btn active" onclick="showPage('dashboard')">Дашборд</button>
+    <button class="nav-btn" onclick="showPage('income')">Приход</button>
+    <button class="nav-btn" onclick="showPage('expenses')">Расходы</button>
+    <button class="nav-btn" onclick="showPage('history')">История</button>
+    <button class="nav-btn" onclick="showPage('limits')">Лимиты</button>
+    <button class="nav-btn" onclick="showPage('config')">Настройки</button>
+    <button class="nav-btn" onclick="showPage('sync')">Синхронизация</button>
+  </div>
+</nav>
+
+<!-- ДАШБОРД -->
+<div class="container">
+  <div id="page-dashboard" class="page active">
+    <div class="love-banner" id="love-banner"></div>
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <div class="card">
+      <div class="card-title">Расходы по категориям (текущий месяц)</div>
+      <div id="expense-chart" class="chart-bar-container"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="card-title">Приход по категориям</div>
+        <div id="income-chart" class="chart-bar-container"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Лимиты</div>
+        <div id="limits-dashboard"></div>
+      </div>
+    </div>
+
+    <div class="card" style="position:relative">
+      <div class="card-title">Последние операции</div>
+      <span class="secret-select">Айдана, ты моё всё &#10084;</span>
+      <!-- Только для тебя, Айдана -->
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Дата</th><th>Категория</th><th>Описание</th><th>Сумма</th></tr></thead>
+          <tbody id="recent-transactions"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПРИХОД -->
+  <div id="page-income" class="page">
+    <div class="card">
+      <div class="card-title">Добавить приход</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Категория</label>
+          <select id="income-cat"></select>
+        </div>
+        <div class="form-group">
+          <label>Сумма</label>
+          <input type="number" id="income-amount" placeholder="0.00" step="0.01" min="0" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Дата</label>
+          <input type="date" id="income-date" />
+        </div>
+        <div class="form-group">
+          <label>Описание</label>
+          <input type="text" id="income-desc" placeholder="Комментарий... (Айдана - лучшая!)" />
+        </div>
+      </div>
+      <div class="btn-group" style="margin-top:8px">
+        <button class="btn btn-success" onclick="addTransaction('income')">Добавить приход</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">История прихода</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Дата</th><th>Категория</th><th>Описание</th><th>Сумма</th><th></th></tr></thead>
+          <tbody id="income-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- РАСХОДЫ -->
+  <div id="page-expenses" class="page">
+    <div class="card">
+      <div class="card-title">Добавить расход</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Категория</label>
+          <select id="expense-cat"></select>
+        </div>
+        <div class="form-group">
+          <label>Сумма</label>
+          <input type="number" id="expense-amount" placeholder="0.00" step="0.01" min="0" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Дата</label>
+          <input type="date" id="expense-date" />
+        </div>
+        <div class="form-group">
+          <label>Описание</label>
+          <input type="text" id="expense-desc" placeholder="Комментарий..." />
+        </div>
+      </div>
+      <div class="btn-group" style="margin-top:8px">
+        <button class="btn btn-danger" onclick="addTransaction('expense')">Добавить расход</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">История расходов</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Дата</th><th>Категория</th><th>Описание</th><th>Сумма</th><th></th></tr></thead>
+          <tbody id="expense-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ИСТОРИЯ -->
+  <div id="page-history" class="page">
+    <div class="card">
+      <div class="card-title">Все операции</div>
+      <div class="filters">
+        <select id="filter-type">
+          <option value="all">Все типы</option>
+          <option value="income">Приход</option>
+          <option value="expense">Расход</option>
+        </select>
+        <select id="filter-cat">
+          <option value="all">Все категории</option>
+        </select>
+        <input type="date" id="filter-from" />
+        <input type="date" id="filter-to" />
+        <button class="btn btn-outline btn-sm" onclick="applyFilters()">Фильтр</button>
+        <button class="btn btn-outline btn-sm" onclick="resetFilters()">Сброс</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Дата</th><th>Тип</th><th>Категория</th><th>Описание</th><th>Сумма</th><th></th></tr></thead>
+          <tbody id="history-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЛИМИТЫ -->
+  <div id="page-limits" class="page">
+    <div class="card">
+      <div class="card-title">Установить лимит на категорию расходов</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Категория расходов</label>
+          <select id="limit-cat"></select>
+        </div>
+        <div class="form-group">
+          <label>Лимит в месяц</label>
+          <input type="number" id="limit-amount" placeholder="0.00" step="0.01" min="0" />
+        </div>
+      </div>
+      <div class="btn-group" style="margin-top:8px">
+        <button class="btn btn-primary" onclick="setLimit()">Установить лимит</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Текущие лимиты</div>
+      <div id="limits-table-wrap">
+        <table>
+          <thead><tr><th>Категория</th><th>Лимит</th><th>Потрачено</th><th>Остаток</th><th>Прогресс</th><th></th></tr></thead>
+          <tbody id="limits-list"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- НАСТРОЙКИ -->
+  <div id="page-config" class="page">
+    <div class="card">
+      <div class="card-title">Категории прихода</div>
+      <div id="income-cats-list"></div>
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group">
+          <input type="text" id="new-income-cat" placeholder="Новая категория прихода..." />
+        </div>
+        <div class="form-group" style="justify-content:flex-end">
+          <button class="btn btn-success btn-sm" onclick="addCategory('income')">Добавить</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Категории расходов</div>
+      <div id="expense-cats-list"></div>
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group">
+          <input type="text" id="new-expense-cat" placeholder="Новая категория расхода..." />
+        </div>
+        <div class="form-group" style="justify-content:flex-end">
+          <button class="btn btn-danger btn-sm" onclick="addCategory('expense')">Добавить</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Валюта</div>
+      <div class="form-row single">
+        <div class="form-group">
+          <select id="currency-select" onchange="saveCurrency()">
+            <option value="сом">Кыргызский сом (сом)</option>
+            <option value="$">Доллар ($)</option>
+            <option value="EUR">Евро (EUR)</option>
+            <option value="RUB">Рубль (RUB)</option>
+            <option value="KZT">Тенге (KZT)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- СКРЫТАЯ СТРАНИЦА ЛЮБВИ -->
+  <div id="page-love" class="page">
+    <div class="card" style="background:transparent;border:none">
+      <div class="love-page-heart">&#10084;</div>
+      <div class="love-page-text">Люблю тебя, Айдана!</div>
+      <div class="love-page-sub">
+        <p>Ты - самое прекрасное, что есть в моей жизни.</p>
+        <p>Каждая улыбка твоя делает мой день лучше.</p>
+        <p>Ты самая красивая, умная и невероятная.</p>
+        <p>С тобой даже бюджет считать - счастье.</p>
+        <p>Я люблю тебя бесконечно, Айдана!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- СИНХРОНИЗАЦИЯ -->
+  <div id="page-sync" class="page">
+    <div class="card">
+      <div class="card-title">Синхронизация между устройствами</div>
+      <p style="color:var(--text2);margin-bottom:16px;font-size:14px">
+        Экспортируйте данные на одном устройстве и импортируйте на другом, чтобы иметь общую базу.
+      </p>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="exportData()">Экспорт данных</button>
+        <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Импорт данных</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Облачная синхронизация (опционально)</div>
+      <p style="color:var(--text2);margin-bottom:16px;font-size:14px">
+        Введите общий ID для автоматической синхронизации между устройствами через сервер.
+        Используйте одинаковый ID на всех устройствах.
+      </p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>URL сервера синхронизации</label>
+          <input type="text" id="sync-server" placeholder="https://your-server.com/api/sync" />
+        </div>
+        <div class="form-group">
+          <label>ID синхронизации</label>
+          <input type="text" id="sync-id" placeholder="my-budget-2024" />
+        </div>
+      </div>
+      <div class="btn-group" style="margin-top:8px">
+        <button class="btn btn-primary" onclick="cloudSync('push')">Отправить на сервер</button>
+        <button class="btn btn-outline" onclick="cloudSync('pull')">Загрузить с сервера</button>
+        <button class="btn btn-outline" onclick="saveSyncSettings()">Сохранить настройки</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Управление данными</div>
+      <div class="btn-group">
+        <button class="btn btn-danger" onclick="clearAllData()">Очистить все данные</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title" id="edit-modal-title">Редактирование</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Категория</label>
+        <select id="edit-cat"></select>
+      </div>
+      <div class="form-group">
+        <label>Сумма</label>
+        <input type="number" id="edit-amount" step="0.01" min="0" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Дата</label>
+        <input type="date" id="edit-date" />
+      </div>
+      <div class="form-group">
+        <label>Описание</label>
+        <input type="text" id="edit-desc" />
+      </div>
+    </div>
+    <div class="btn-group" style="margin-top:12px">
+      <button class="btn btn-primary" onclick="saveEdit()">Сохранить</button>
+      <button class="btn btn-outline" onclick="closeModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ КАТЕГОРИИ -->
+<div class="modal-overlay" id="cat-edit-modal">
+  <div class="modal">
+    <div class="modal-title">Переименовать категорию</div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label>Новое название</label>
+        <input type="text" id="cat-edit-name" />
+      </div>
+    </div>
+    <input type="hidden" id="cat-edit-type" />
+    <input type="hidden" id="cat-edit-old" />
+    <div class="btn-group" style="margin-top:12px">
+      <button class="btn btn-primary" onclick="saveCatEdit()">Сохранить</button>
+      <button class="btn btn-outline" onclick="closeCatModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ===== ДАННЫЕ =====
+var defaultData = {
+  incomeCategories: ['Зарплата', 'Комиссии', 'Прочее'],
+  expenseCategories: ['Еда', 'Транспорт', 'Жилье', 'Коммунальные', 'Связь', 'Одежда', 'Здоровье', 'Развлечения', 'Образование', 'Расходы на Любимого', 'Прочее'],
+  transactions: [],
+  limits: {},
+  currency: 'сом',
+  syncServer: '',
+  syncId: ''
+};
+
+var data = {};
+var editingId = null;
+
+function loadData() {
+  try {
+    var saved = localStorage.getItem('budget_app_data');
+    if (saved) {
+      data = JSON.parse(saved);
+      if (!data.incomeCategories) data.incomeCategories = defaultData.incomeCategories.slice();
+      if (!data.expenseCategories) data.expenseCategories = defaultData.expenseCategories.slice();
+      if (!data.transactions) data.transactions = [];
+      if (!data.limits) data.limits = {};
+      if (!data.currency) data.currency = 'сом';
+    } else {
+      data = JSON.parse(JSON.stringify(defaultData));
+    }
+  } catch(e) {
+    data = JSON.parse(JSON.stringify(defaultData));
+  }
+}
+
+function saveData() {
+  localStorage.setItem('budget_app_data', JSON.stringify(data));
+}
+
+// ===== НАВИГАЦИЯ =====
+function showPage(page) {
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) pages[i].className = 'page';
+  document.getElementById('page-' + page).className = 'page active';
+
+  var btns = document.querySelectorAll('.nav-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].className = 'nav-btn';
+  btns[Array.prototype.indexOf.call(btns, event.target) !== -1 ?
+    Array.prototype.indexOf.call(btns, event.target) : 0].className = 'nav-btn active';
+
+  // Найти кнопку по тексту
+  for (var i = 0; i < btns.length; i++) {
+    var txt = btns[i].textContent.toLowerCase();
+    if ((page === 'dashboard' && txt.indexOf('дашборд') !== -1) ||
+        (page === 'income' && txt.indexOf('приход') !== -1) ||
+        (page === 'expenses' && txt.indexOf('расход') !== -1) ||
+        (page === 'history' && txt.indexOf('истори') !== -1) ||
+        (page === 'limits' && txt.indexOf('лимит') !== -1) ||
+        (page === 'config' && txt.indexOf('настрой') !== -1) ||
+        (page === 'sync' && txt.indexOf('синхрон') !== -1)) {
+      btns[i].className = 'nav-btn active';
+    } else {
+      btns[i].className = 'nav-btn';
+    }
+  }
+
+  refreshAll();
+}
+
+// ===== ФОРМАТИРОВАНИЕ =====
+function fmt(n) {
+  var num = parseFloat(n) || 0;
+  return num.toLocaleString('ru-RU', {minimumFractionDigits: 0, maximumFractionDigits: 2}) + ' ' + data.currency;
+}
+
+function today() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function currentMonth() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+// ===== ТРАНЗАКЦИИ =====
+function addTransaction(type) {
+  var cat = document.getElementById(type === 'income' ? 'income-cat' : 'expense-cat').value;
+  var amount = parseFloat(document.getElementById(type === 'income' ? 'income-amount' : 'expense-amount').value);
+  var date = document.getElementById(type === 'income' ? 'income-date' : 'expense-date').value;
+  var desc = document.getElementById(type === 'income' ? 'income-desc' : 'expense-desc').value;
+
+  if (!cat || !amount || amount <= 0) {
+    showToast('Укажите категорию и сумму');
+    return;
+  }
+  if (!date) date = today();
+
+  data.transactions.push({
+    id: Date.now() + Math.random(),
+    type: type,
+    category: cat,
+    amount: amount,
+    date: date,
+    description: desc
+  });
+
+  saveData();
+
+  // Очистить
+  document.getElementById(type === 'income' ? 'income-amount' : 'expense-amount').value = '';
+  document.getElementById(type === 'income' ? 'income-desc' : 'expense-desc').value = '';
+
+  // Проверка лимита
+  if (type === 'expense' && data.limits[cat]) {
+    var monthSpent = getMonthSpent(cat);
+    var limit = data.limits[cat];
+    if (monthSpent > limit) {
+      showToast('Внимание! Лимит по "' + cat + '" превышен: ' + fmt(monthSpent) + ' из ' + fmt(limit));
+    } else if (monthSpent > limit * 0.8) {
+      showToast('Осторожно! "' + cat + '": израсходовано 80%+ лимита');
+    }
+  }
+
+  showToast(type === 'income' ? 'Приход добавлен' : 'Расход добавлен');
+  refreshAll();
+}
+
+function deleteTransaction(id) {
+  if (!confirm('Удалить эту запись?')) return;
+  data.transactions = data.transactions.filter(function(t) { return t.id !== id; });
+  saveData();
+  refreshAll();
+  showToast('Запись удалена');
+}
+
+function editTransaction(id) {
+  var t = data.transactions.find(function(t) { return t.id === id; });
+  if (!t) return;
+
+  editingId = id;
+  document.getElementById('edit-modal-title').textContent = t.type === 'income' ? 'Редактировать приход' : 'Редактировать расход';
+
+  var sel = document.getElementById('edit-cat');
+  var cats = t.type === 'income' ? data.incomeCategories : data.expenseCategories;
+  sel.innerHTML = '';
+  for (var i = 0; i < cats.length; i++) {
+    var o = document.createElement('option');
+    o.value = cats[i];
+    o.textContent = cats[i];
+    if (cats[i] === t.category) o.selected = true;
+    sel.appendChild(o);
+  }
+
+  document.getElementById('edit-amount').value = t.amount;
+  document.getElementById('edit-date').value = t.date;
+  document.getElementById('edit-desc').value = t.description || '';
+  document.getElementById('edit-modal').className = 'modal-overlay show';
+}
+
+function saveEdit() {
+  var t = data.transactions.find(function(t) { return t.id === editingId; });
+  if (!t) return;
+
+  t.category = document.getElementById('edit-cat').value;
+  t.amount = parseFloat(document.getElementById('edit-amount').value) || 0;
+  t.date = document.getElementById('edit-date').value;
+  t.description = document.getElementById('edit-desc').value;
+
+  saveData();
+  closeModal();
+  refreshAll();
+  showToast('Запись обновлена');
+}
+
+function closeModal() {
+  document.getElementById('edit-modal').className = 'modal-overlay';
+  editingId = null;
+}
+
+// ===== КАТЕГОРИИ =====
+function addCategory(type) {
+  var inputId = type === 'income' ? 'new-income-cat' : 'new-expense-cat';
+  var name = document.getElementById(inputId).value.trim();
+  if (!name) return;
+
+  var arr = type === 'income' ? data.incomeCategories : data.expenseCategories;
+  if (arr.indexOf(name) !== -1) {
+    showToast('Такая категория уже есть');
+    return;
+  }
+
+  arr.push(name);
+  document.getElementById(inputId).value = '';
+  saveData();
+  refreshAll();
+  showToast('Категория добавлена');
+}
+
+function deleteCategory(type, name) {
+  if (!confirm('Удалить категорию "' + name + '"? Существующие записи сохранятся.')) return;
+  var arr = type === 'income' ? data.incomeCategories : data.expenseCategories;
+  var idx = arr.indexOf(name);
+  if (idx !== -1) arr.splice(idx, 1);
+  saveData();
+  refreshAll();
+  showToast('Категория удалена');
+}
+
+function editCategory(type, name) {
+  document.getElementById('cat-edit-name').value = name;
+  document.getElementById('cat-edit-type').value = type;
+  document.getElementById('cat-edit-old').value = name;
+  document.getElementById('cat-edit-modal').className = 'modal-overlay show';
+}
+
+function saveCatEdit() {
+  var newName = document.getElementById('cat-edit-name').value.trim();
+  var type = document.getElementById('cat-edit-type').value;
+  var oldName = document.getElementById('cat-edit-old').value;
+
+  if (!newName) return;
+
+  var arr = type === 'income' ? data.incomeCategories : data.expenseCategories;
+  var idx = arr.indexOf(oldName);
+  if (idx !== -1) arr[idx] = newName;
+
+  // Обновить транзакции
+  for (var i = 0; i < data.transactions.length; i++) {
+    if (data.transactions[i].category === oldName && data.transactions[i].type === type) {
+      data.transactions[i].category = newName;
+    }
+  }
+
+  // Обновить лимиты
+  if (type === 'expense' && data.limits[oldName] !== undefined) {
+    data.limits[newName] = data.limits[oldName];
+    delete data.limits[oldName];
+  }
+
+  saveData();
+  closeCatModal();
+  refreshAll();
+  showToast('Категория переименована');
+}
+
+function closeCatModal() {
+  document.getElementById('cat-edit-modal').className = 'modal-overlay';
+}
+
+// ===== ЛИМИТЫ =====
+function setLimit() {
+  var cat = document.getElementById('limit-cat').value;
+  var amount = parseFloat(document.getElementById('limit-amount').value);
+
+  if (!cat || !amount || amount <= 0) {
+    showToast('Укажите категорию и сумму лимита');
+    return;
+  }
+
+  data.limits[cat] = amount;
+  document.getElementById('limit-amount').value = '';
+  saveData();
+  refreshAll();
+  showToast('Лимит установлен');
+}
+
+function deleteLimit(cat) {
+  delete data.limits[cat];
+  saveData();
+  refreshAll();
+  showToast('Лимит удален');
+}
+
+function getMonthSpent(cat) {
+  var cm = currentMonth();
+  var total = 0;
+  for (var i = 0; i < data.transactions.length; i++) {
+    var t = data.transactions[i];
+    if (t.type === 'expense' && t.category === cat && t.date.substring(0,7) === cm) {
+      total += t.amount;
+    }
+  }
+  return total;
+}
+
+// ===== ОБНОВЛЕНИЕ UI =====
+function refreshAll() {
+  refreshSelects();
+  refreshDashboard();
+  refreshIncome();
+  refreshExpenses();
+  refreshHistory();
+  refreshLimits();
+  refreshConfig();
+}
+
+function refreshSelects() {
+  var sets = [
+    {sel: 'income-cat', cats: data.incomeCategories},
+    {sel: 'expense-cat', cats: data.expenseCategories},
+    {sel: 'limit-cat', cats: data.expenseCategories}
+  ];
+
+  for (var s = 0; s < sets.length; s++) {
+    var el = document.getElementById(sets[s].sel);
+    if (!el) continue;
+    var val = el.value;
+    el.innerHTML = '';
+    for (var i = 0; i < sets[s].cats.length; i++) {
+      var o = document.createElement('option');
+      o.value = sets[s].cats[i];
+      o.textContent = sets[s].cats[i];
+      el.appendChild(o);
+    }
+    if (val && sets[s].cats.indexOf(val) !== -1) el.value = val;
+  }
+
+  // Фильтр категорий
+  var fc = document.getElementById('filter-cat');
+  if (fc) {
+    var fv = fc.value;
+    fc.innerHTML = '<option value="all">Все категории</option>';
+    var allCats = data.incomeCategories.concat(data.expenseCategories);
+    var unique = [];
+    for (var i = 0; i < allCats.length; i++) {
+      if (unique.indexOf(allCats[i]) === -1) unique.push(allCats[i]);
+    }
+    for (var i = 0; i < unique.length; i++) {
+      var o = document.createElement('option');
+      o.value = unique[i];
+      o.textContent = unique[i];
+      fc.appendChild(o);
+    }
+    if (fv) fc.value = fv;
+  }
+
+  // Дата по умолчанию
+  var dateInputs = ['income-date', 'expense-date'];
+  for (var i = 0; i < dateInputs.length; i++) {
+    var el = document.getElementById(dateInputs[i]);
+    if (el && !el.value) el.value = today();
+  }
+
+  // Валюта
+  var cs = document.getElementById('currency-select');
+  if (cs) cs.value = data.currency;
+}
+
+function refreshDashboard() {
+  var cm = currentMonth();
+  var totalIncome = 0, totalExpense = 0;
+  var monthIncome = 0, monthExpense = 0;
+  var catExpense = {}, catIncome = {};
+
+  for (var i = 0; i < data.transactions.length; i++) {
+    var t = data.transactions[i];
+    if (t.type === 'income') {
+      totalIncome += t.amount;
+      if (t.date.substring(0,7) === cm) {
+        monthIncome += t.amount;
+        catIncome[t.category] = (catIncome[t.category] || 0) + t.amount;
+      }
+    } else {
+      totalExpense += t.amount;
+      if (t.date.substring(0,7) === cm) {
+        monthExpense += t.amount;
+        catExpense[t.category] = (catExpense[t.category] || 0) + t.amount;
+      }
+    }
+  }
+
+  // Статистика
+  document.getElementById('stats-grid').innerHTML =
+    '<div class="stat-card"><div class="stat-label">Приход за месяц</div><div class="stat-value income">' + fmt(monthIncome) + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Расход за месяц</div><div class="stat-value expense">' + fmt(monthExpense) + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Баланс за месяц</div><div class="stat-value balance">' + fmt(monthIncome - monthExpense) + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Общий баланс</div><div class="stat-value balance">' + fmt(totalIncome - totalExpense) + '</div></div>';
+
+  // График расходов
+  var expChart = document.getElementById('expense-chart');
+  var maxExp = 0;
+  for (var k in catExpense) if (catExpense[k] > maxExp) maxExp = catExpense[k];
+
+  var expHtml = '';
+  for (var k in catExpense) {
+    var pct = maxExp > 0 ? (catExpense[k] / maxExp * 100) : 0;
+    var limitLine = '';
+    if (data.limits[k] && maxExp > 0) {
+      var limitPct = Math.min(data.limits[k] / maxExp * 100, 100);
+      limitLine = '<div class="chart-bar-limit" style="left:' + limitPct + '%"></div>';
+    }
+    var color = (data.limits[k] && catExpense[k] > data.limits[k]) ? 'var(--red)' : 'var(--accent2)';
+    expHtml += '<div class="chart-bar-row">' +
+      '<div class="chart-bar-label">' + k + '</div>' +
+      '<div class="chart-bar-track">' + limitLine + '<div class="chart-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+      '<div class="chart-bar-value">' + fmt(catExpense[k]) + '</div></div>';
+  }
+  expChart.innerHTML = expHtml || '<div class="empty"><div class="empty-text">Нет расходов за этот месяц</div></div>';
+
+  // График доходов
+  var incChart = document.getElementById('income-chart');
+  var maxInc = 0;
+  for (var k in catIncome) if (catIncome[k] > maxInc) maxInc = catIncome[k];
+
+  var incHtml = '';
+  for (var k in catIncome) {
+    var pct = maxInc > 0 ? (catIncome[k] / maxInc * 100) : 0;
+    incHtml += '<div class="chart-bar-row">' +
+      '<div class="chart-bar-label">' + k + '</div>' +
+      '<div class="chart-bar-track"><div class="chart-bar-fill" style="width:' + pct + '%;background:var(--green)"></div></div>' +
+      '<div class="chart-bar-value">' + fmt(catIncome[k]) + '</div></div>';
+  }
+  incChart.innerHTML = incHtml || '<div class="empty"><div class="empty-text">Нет прихода</div></div>';
+
+  // Лимиты на дашборде
+  var limDash = document.getElementById('limits-dashboard');
+  var limHtml = '';
+  for (var cat in data.limits) {
+    var spent = getMonthSpent(cat);
+    var limit = data.limits[cat];
+    var pct = Math.min(spent / limit * 100, 100);
+    var color = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--yellow)' : 'var(--green)';
+    limHtml += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px">' +
+      '<span>' + cat + '</span><span style="color:' + color + '">' + fmt(spent) + ' / ' + fmt(limit) + '</span></div>' +
+      '<div class="limit-progress"><div class="limit-progress-fill" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
+  }
+  limDash.innerHTML = limHtml || '<div class="empty"><div class="empty-text">Лимиты не установлены</div></div>';
+
+  // Последние транзакции
+  var sorted = data.transactions.slice().sort(function(a,b) { return b.date.localeCompare(a.date) || b.id - a.id; });
+  var recent = sorted.slice(0, 10);
+  var tbody = document.getElementById('recent-transactions');
+  var html = '';
+  for (var i = 0; i < recent.length; i++) {
+    var t = recent[i];
+    var cls = t.type === 'income' ? 'amount-in' : 'amount-out';
+    var sign = t.type === 'income' ? '+' : '-';
+    html += '<tr><td>' + t.date + '</td><td><span class="badge badge-' + t.type + '">' + t.category + '</span></td>' +
+      '<td>' + (t.description || '—') + '</td><td class="' + cls + '">' + sign + fmt(t.amount) + '</td></tr>';
+  }
+  tbody.innerHTML = html || '<tr><td colspan="4" class="empty"><div class="empty-text">Пока нет операций</div></td></tr>';
+}
+
+function refreshIncome() {
+  var sorted = data.transactions.filter(function(t){ return t.type==='income'; })
+    .sort(function(a,b){ return b.date.localeCompare(a.date) || b.id - a.id; });
+  var html = '';
+  for (var i = 0; i < sorted.length; i++) {
+    var t = sorted[i];
+    html += '<tr><td>' + t.date + '</td><td>' + t.category + '</td><td>' + (t.description||'—') + '</td>' +
+      '<td class="amount-in">+' + fmt(t.amount) + '</td>' +
+      '<td><button class="btn btn-outline btn-sm" onclick="editTransaction(' + t.id + ')" title="Редактировать">&#9998;</button> ' +
+      '<button class="btn btn-outline btn-sm" onclick="deleteTransaction(' + t.id + ')" title="Удалить">&#10005;</button></td></tr>';
+  }
+  document.getElementById('income-table').innerHTML = html || '<tr><td colspan="5" class="empty"><div class="empty-text">Нет записей</div></td></tr>';
+}
+
+function refreshExpenses() {
+  var sorted = data.transactions.filter(function(t){ return t.type==='expense'; })
+    .sort(function(a,b){ return b.date.localeCompare(a.date) || b.id - a.id; });
+  var html = '';
+  for (var i = 0; i < sorted.length; i++) {
+    var t = sorted[i];
+    html += '<tr><td>' + t.date + '</td><td>' + t.category + '</td><td>' + (t.description||'—') + '</td>' +
+      '<td class="amount-out">-' + fmt(t.amount) + '</td>' +
+      '<td><button class="btn btn-outline btn-sm" onclick="editTransaction(' + t.id + ')" title="Редактировать">&#9998;</button> ' +
+      '<button class="btn btn-outline btn-sm" onclick="deleteTransaction(' + t.id + ')" title="Удалить">&#10005;</button></td></tr>';
+  }
+  document.getElementById('expense-table').innerHTML = html || '<tr><td colspan="5" class="empty"><div class="empty-text">Нет записей</div></td></tr>';
+}
+
+function refreshHistory() {
+  applyFilters();
+}
+
+function applyFilters() {
+  var typeF = document.getElementById('filter-type').value;
+  var catF = document.getElementById('filter-cat').value;
+  var fromF = document.getElementById('filter-from').value;
+  var toF = document.getElementById('filter-to').value;
+
+  var filtered = data.transactions.filter(function(t) {
+    if (typeF !== 'all' && t.type !== typeF) return false;
+    if (catF !== 'all' && t.category !== catF) return false;
+    if (fromF && t.date < fromF) return false;
+    if (toF && t.date > toF) return false;
+    return true;
+  }).sort(function(a,b){ return b.date.localeCompare(a.date) || b.id - a.id; });
+
+  var html = '';
+  for (var i = 0; i < filtered.length; i++) {
+    var t = filtered[i];
+    var cls = t.type === 'income' ? 'amount-in' : 'amount-out';
+    var sign = t.type === 'income' ? '+' : '-';
+    var badge = t.type === 'income' ? 'badge-income' : 'badge-expense';
+    var typeName = t.type === 'income' ? 'Приход' : 'Расход';
+    html += '<tr><td>' + t.date + '</td><td><span class="badge ' + badge + '">' + typeName + '</span></td>' +
+      '<td>' + t.category + '</td><td>' + (t.description||'—') + '</td>' +
+      '<td class="' + cls + '">' + sign + fmt(t.amount) + '</td>' +
+      '<td><button class="btn btn-outline btn-sm" onclick="editTransaction(' + t.id + ')">&#9998;</button> ' +
+      '<button class="btn btn-outline btn-sm" onclick="deleteTransaction(' + t.id + ')">&#10005;</button></td></tr>';
+  }
+  document.getElementById('history-table').innerHTML = html || '<tr><td colspan="6" class="empty"><div class="empty-text">Нет записей</div></td></tr>';
+}
+
+function resetFilters() {
+  document.getElementById('filter-type').value = 'all';
+  document.getElementById('filter-cat').value = 'all';
+  document.getElementById('filter-from').value = '';
+  document.getElementById('filter-to').value = '';
+  applyFilters();
+}
+
+function refreshLimits() {
+  var html = '';
+  for (var cat in data.limits) {
+    var spent = getMonthSpent(cat);
+    var limit = data.limits[cat];
+    var remaining = limit - spent;
+    var pct = Math.min(spent / limit * 100, 100);
+    var color = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--yellow)' : 'var(--green)';
+    html += '<tr><td>' + cat + '</td><td>' + fmt(limit) + '</td><td>' + fmt(spent) + '</td>' +
+      '<td style="color:' + color + '">' + fmt(remaining) + '</td>' +
+      '<td style="width:150px"><div class="limit-progress"><div class="limit-progress-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+      '<div style="font-size:11px;color:var(--text2);margin-top:2px">' + Math.round(pct) + '%</div></td>' +
+      '<td><button class="btn btn-outline btn-sm" onclick="deleteLimit(\'' + cat.replace(/'/g, "\\'") + '\')">&#10005;</button></td></tr>';
+  }
+  document.getElementById('limits-list').innerHTML = html || '<tr><td colspan="6" class="empty"><div class="empty-text">Лимиты не установлены</div></td></tr>';
+}
+
+function refreshConfig() {
+  // Категории прихода
+  var html = '';
+  for (var i = 0; i < data.incomeCategories.length; i++) {
+    var c = data.incomeCategories[i];
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="flex:1">' + c + '</span>' +
+      '<button class="btn btn-outline btn-sm" onclick="editCategory(\'income\',\'' + c.replace(/'/g, "\\'") + '\')">&#9998;</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="deleteCategory(\'income\',\'' + c.replace(/'/g, "\\'") + '\')">&#10005;</button></div>';
+  }
+  document.getElementById('income-cats-list').innerHTML = html;
+
+  // Категории расходов
+  html = '';
+  for (var i = 0; i < data.expenseCategories.length; i++) {
+    var c = data.expenseCategories[i];
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="flex:1">' + c + '</span>' +
+      '<button class="btn btn-outline btn-sm" onclick="editCategory(\'expense\',\'' + c.replace(/'/g, "\\'") + '\')">&#9998;</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="deleteCategory(\'expense\',\'' + c.replace(/'/g, "\\'") + '\')">&#10005;</button></div>';
+  }
+  document.getElementById('expense-cats-list').innerHTML = html;
+}
+
+// ===== ВАЛЮТА =====
+function saveCurrency() {
+  data.currency = document.getElementById('currency-select').value;
+  saveData();
+  refreshAll();
+}
+
+// ===== СИНХРОНИЗАЦИЯ =====
+function exportData() {
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json], {type: 'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'budget_' + today() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Данные экспортированы');
+}
+
+function importData(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var imported = JSON.parse(e.target.result);
+      if (imported.transactions) {
+        if (confirm('Заменить все текущие данные импортированными?')) {
+          data = imported;
+          if (!data.incomeCategories) data.incomeCategories = defaultData.incomeCategories.slice();
+          if (!data.expenseCategories) data.expenseCategories = defaultData.expenseCategories.slice();
+          if (!data.transactions) data.transactions = [];
+          if (!data.limits) data.limits = {};
+          if (!data.currency) data.currency = 'сом';
+          saveData();
+          refreshAll();
+          showToast('Данные импортированы');
+        }
+      } else {
+        showToast('Неверный формат файла');
+      }
+    } catch(err) {
+      showToast('Ошибка чтения файла');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function saveSyncSettings() {
+  data.syncServer = document.getElementById('sync-server').value;
+  data.syncId = document.getElementById('sync-id').value;
+  saveData();
+  showToast('Настройки синхронизации сохранены');
+}
+
+function cloudSync(action) {
+  var server = document.getElementById('sync-server').value;
+  var syncId = document.getElementById('sync-id').value;
+
+  if (!server || !syncId) {
+    showToast('Укажите URL сервера и ID синхронизации');
+    return;
+  }
+
+  var url = server.replace(/\/$/, '') + '/' + encodeURIComponent(syncId);
+
+  if (action === 'push') {
+    fetch(url, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    }).then(function(r) {
+      if (r.ok) showToast('Данные отправлены на сервер');
+      else showToast('Ошибка отправки: ' + r.status);
+    }).catch(function(e) { showToast('Ошибка подключения к серверу'); });
+  } else {
+    fetch(url).then(function(r) {
+      if (r.ok) return r.json();
+      throw new Error('HTTP ' + r.status);
+    }).then(function(d) {
+      data = d;
+      if (!data.incomeCategories) data.incomeCategories = defaultData.incomeCategories.slice();
+      if (!data.expenseCategories) data.expenseCategories = defaultData.expenseCategories.slice();
+      if (!data.transactions) data.transactions = [];
+      if (!data.limits) data.limits = {};
+      if (!data.currency) data.currency = 'сом';
+      saveData();
+      refreshAll();
+      showToast('Данные загружены с сервера');
+    }).catch(function(e) { showToast('Ошибка загрузки с сервера'); });
+  }
+}
+
+function clearAllData() {
+  if (!confirm('Вы уверены? Все данные будут удалены!')) return;
+  if (!confirm('Точно удалить ВСЕ данные? Это действие необратимо.')) return;
+  data = JSON.parse(JSON.stringify(defaultData));
+  saveData();
+  refreshAll();
+  showToast('Все данные очищены');
+}
+
+// ===== УВЕДОМЛЕНИЯ =====
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show';
+  setTimeout(function() { el.className = 'toast'; }, 3000);
+}
+
+// ===== ПАСХАЛКИ =====
+
+// 1. Тройной клик на заголовок "Бюджет" - открывает секретную страницу
+var titleClicks = 0;
+var titleTimer = null;
+function easterTitle() {
+  titleClicks++;
+  if (titleTimer) clearTimeout(titleTimer);
+  titleTimer = setTimeout(function() { titleClicks = 0; }, 600);
+  if (titleClicks >= 3) {
+    titleClicks = 0;
+    showPage('love');
+    // Убрать active со всех кнопок навигации
+    var btns = document.querySelectorAll('.nav-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].className = 'nav-btn';
+    spawnHearts(15);
+  }
+}
+
+// 2. Плавающие сердечки
+function spawnHearts(count) {
+  for (var i = 0; i < count; i++) {
+    (function(delay) {
+      setTimeout(function() {
+        var heart = document.createElement('div');
+        heart.className = 'floating-heart';
+        heart.innerHTML = ['&#10084;','&#10083;','&#9829;','&#10085;'][Math.floor(Math.random()*4)];
+        heart.style.left = (Math.random() * 90 + 5) + '%';
+        heart.style.top = (60 + Math.random() * 30) + '%';
+        heart.style.fontSize = (14 + Math.random() * 24) + 'px';
+        heart.style.color = ['#fd79a8','#e84393','#a29bfe','#ff6b6b','#ee5a24'][Math.floor(Math.random()*5)];
+        document.body.appendChild(heart);
+        setTimeout(function() { heart.remove(); }, 3000);
+      }, delay * 150);
+    })(i);
+  }
+}
+
+// 3. Секретная комбинация клавиш: набрать "love" вызывает сердечки
+var secretBuffer = '';
+document.addEventListener('keypress', function(e) {
+  secretBuffer += e.key.toLowerCase();
+  if (secretBuffer.length > 10) secretBuffer = secretBuffer.slice(-10);
+  if (secretBuffer.indexOf('love') !== -1) {
+    secretBuffer = '';
+    spawnHearts(20);
+    showToast('Айдана, ты самая лучшая!');
+  }
+  if (secretBuffer.indexOf('aidana') !== -1) {
+    secretBuffer = '';
+    showPage('love');
+    var btns = document.querySelectorAll('.nav-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].className = 'nav-btn';
+    spawnHearts(25);
+  }
+});
+
+// 4. Случайные редкие сердечки при клике по странице (1 из 15 шанс)
+document.addEventListener('click', function(e) {
+  if (Math.random() < 0.07) {
+    var heart = document.createElement('div');
+    heart.className = 'floating-heart';
+    heart.innerHTML = '&#10084;';
+    heart.style.left = e.clientX + 'px';
+    heart.style.top = e.clientY + 'px';
+    heart.style.color = '#fd79a8';
+    heart.style.fontSize = '16px';
+    document.body.appendChild(heart);
+    setTimeout(function() { heart.remove(); }, 3000);
+  }
+});
+
+// 5. Console пасхалка
+console.log('%c\u2764 Это приложение сделано с любовью для Айданы \u2764', 'color:#fd79a8;font-size:16px;font-weight:bold');
+console.log('%cАйдана, ты самая лучшая!', 'color:#a29bfe;font-size:12px');
+
+// 6. Заголовок вкладки меняется когда уходишь
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    document.title = '\u2764 Скучаю, Айдана!';
+  } else {
+    document.title = 'Бюджет';
+  }
+});
+
+// 7. Конами-код (вверх вверх вниз вниз влево вправо влево вправо) - фейерверк сердечек
+var konamiSeq = [38,38,40,40,37,39,37,39];
+var konamiPos = 0;
+document.addEventListener('keydown', function(e) {
+  if (e.keyCode === konamiSeq[konamiPos]) {
+    konamiPos++;
+    if (konamiPos === konamiSeq.length) {
+      konamiPos = 0;
+      fireworkHearts();
+      showToast('Секретный код! Айдана, я люблю тебя!');
+    }
+  } else {
+    konamiPos = 0;
+  }
+});
+
+function fireworkHearts() {
+  var colors = ['#fd79a8','#e84393','#a29bfe','#ff6b6b','#ffeaa7','#55efc4','#74b9ff'];
+  for (var burst = 0; burst < 5; burst++) {
+    (function(b) {
+      setTimeout(function() {
+        var cx = Math.random() * 80 + 10;
+        var cy = Math.random() * 60 + 10;
+        for (var i = 0; i < 12; i++) {
+          (function(idx) {
+            setTimeout(function() {
+              var h = document.createElement('div');
+              h.className = 'floating-heart';
+              h.innerHTML = ['&#10084;','&#10083;','&#9829;','&#10049;','&#9733;'][Math.floor(Math.random()*5)];
+              h.style.left = cx + (Math.random()*20-10) + '%';
+              h.style.top = cy + '%';
+              h.style.fontSize = (16 + Math.random()*20) + 'px';
+              h.style.color = colors[Math.floor(Math.random()*colors.length)];
+              document.body.appendChild(h);
+              setTimeout(function() { h.remove(); }, 3500);
+            }, idx * 80);
+          })(i);
+        }
+      }, b * 500);
+    })(burst);
+  }
+}
+
+// 8. Встряхнуть телефон - сердечки (для мобильного)
+var shakeThreshold = 25;
+var lastX = null, lastY = null, lastZ = null;
+if (window.DeviceMotionEvent) {
+  window.addEventListener('devicemotion', function(e) {
+    var acc = e.accelerationIncludingGravity;
+    if (!acc) return;
+    if (lastX !== null) {
+      var dX = Math.abs(acc.x - lastX);
+      var dY = Math.abs(acc.y - lastY);
+      var dZ = Math.abs(acc.z - lastZ);
+      if ((dX > shakeThreshold || dY > shakeThreshold || dZ > shakeThreshold)) {
+        spawnHearts(10);
+        showToast('Айдана, обнимаю тебя!');
+      }
+    }
+    lastX = acc.x; lastY = acc.y; lastZ = acc.z;
+  });
+}
+
+// 9. Двойной клик по пустому месту дашборда - конфетти
+document.addEventListener('dblclick', function(e) {
+  if (e.target.closest && (e.target.closest('.card') || e.target.closest('.btn') || e.target.closest('input') || e.target.closest('select'))) return;
+  spawnConfetti(25);
+});
+
+function spawnConfetti(count) {
+  var shapes = ['&#10084;','&#9733;','&#9830;','&#10047;','&#10053;','&#9829;'];
+  var colors = ['#fd79a8','#ffeaa7','#55efc4','#74b9ff','#a29bfe','#ff6b6b','#fdcb6e'];
+  for (var i = 0; i < count; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var c = document.createElement('div');
+        c.className = 'confetti';
+        c.innerHTML = shapes[Math.floor(Math.random()*shapes.length)];
+        c.style.left = (Math.random() * 100) + '%';
+        c.style.top = '-20px';
+        c.style.fontSize = (10 + Math.random()*16) + 'px';
+        c.style.color = colors[Math.floor(Math.random()*colors.length)];
+        document.body.appendChild(c);
+        setTimeout(function() { c.remove(); }, 3000);
+      }, idx * 60);
+    })(i);
+  }
+}
+
+// 10. Сумма 143 (I Love You) - секретная реакция
+var origAddTransaction = addTransaction;
+addTransaction = function(type) {
+  var amountEl = document.getElementById(type === 'income' ? 'income-amount' : 'expense-amount');
+  var amount = parseFloat(amountEl.value);
+  origAddTransaction(type);
+  if (amount === 143) {
+    setTimeout(function() {
+      showToast('143 = I Love You! Люблю тебя, Айдана!');
+      spawnHearts(15);
+    }, 500);
+  }
+  if (amount === 1437) {
+    setTimeout(function() {
+      showToast('1437 = I Love You Forever! Навсегда, Айдана!');
+      fireworkHearts();
+    }, 500);
+  }
+  if (amount === 520) {
+    setTimeout(function() {
+      showToast('520 = Wo Ai Ni! Я люблю тебя, Айдана!');
+      spawnHearts(20);
+    }, 500);
+  }
+};
+
+// 11. Звёзды на фоне секретной страницы
+function createStars() {
+  var page = document.getElementById('page-love');
+  if (!page) return;
+  for (var i = 0; i < 20; i++) {
+    var star = document.createElement('div');
+    star.className = 'star';
+    star.innerHTML = '&#10022;';
+    star.style.left = (Math.random()*100) + '%';
+    star.style.top = (Math.random()*100) + '%';
+    star.style.fontSize = (8 + Math.random()*14) + 'px';
+    star.style.animationDelay = (Math.random()*3) + 's';
+    star.style.animationDuration = (1.5 + Math.random()*2) + 's';
+    page.style.position = 'relative';
+    page.appendChild(star);
+  }
+}
+createStars();
+
+// 12. 14 февраля - валентинов режим автоматически
+(function() {
+  var now = new Date();
+  if (now.getMonth() === 1 && now.getDate() === 14) {
+    document.body.className = 'valentine-mode';
+    showToast('С Днём Святого Валентина, Айдана! &#10084;');
+    setTimeout(function() { fireworkHearts(); }, 1000);
+  }
+})();
+
+// 13. Секретное сообщение если долго не трогать (30 сек)
+var idleTimer = null;
+function resetIdle() {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(function() {
+    showToast('Айдана, не уходи... Я скучаю!');
+  }, 30000);
+}
+document.addEventListener('mousemove', resetIdle);
+document.addEventListener('touchstart', resetIdle);
+document.addEventListener('keydown', resetIdle);
+resetIdle();
+
+
+// 15. Пасхалка при скролле вниз до конца - радуга
+var scrollEasterShown = false;
+window.addEventListener('scroll', function() {
+  if (scrollEasterShown) return;
+  if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 5) {
+    scrollEasterShown = true;
+    var footer = document.querySelector('.love-footer');
+    if (footer) {
+      footer.className = 'love-footer rainbow-text';
+      footer.textContent = 'Айдана, ты свет моей жизни!';
+      footer.style.opacity = '1';
+      footer.style.fontSize = '16px';
+    }
+    spawnConfetti(30);
+    setTimeout(function() { scrollEasterShown = false; }, 10000);
+  }
+});
+
+// 16. Секретное слово в описании транзакции
+var origSaveEdit2 = saveEdit;
+saveEdit = function() {
+  var desc = document.getElementById('edit-desc').value.toLowerCase();
+  origSaveEdit2();
+  if (desc.indexOf('айдана') !== -1) {
+    setTimeout(function() {
+      spawnHearts(10);
+      showToast('Всё для тебя, Айдана!');
+    }, 300);
+  }
+};
+
+// 17. Favicon меняется на сердечко
+(function() {
+  var canvas = document.createElement('canvas');
+  canvas.width = 32; canvas.height = 32;
+  var ctx = canvas.getContext('2d');
+  ctx.font = '28px serif';
+  ctx.fillText('\u2764', 2, 28);
+  var link = document.createElement('link');
+  link.rel = 'icon';
+  link.href = canvas.toDataURL();
+  document.head.appendChild(link);
+})();
+
+// 18. Пасхалка: набрать "kiss" на клавиатуре
+// (добавляем в существующий обработчик)
+var origKeypress = null;
+document.addEventListener('keypress', function(e) {
+  secretBuffer += '';
+  if (secretBuffer.indexOf('kiss') !== -1) {
+    secretBuffer = '';
+    showToast('&#128139; Целую тебя, Айдана!');
+    spawnConfetti(20);
+  }
+  if (secretBuffer.indexOf('heart') !== -1) {
+    secretBuffer = '';
+    fireworkHearts();
+  }
+  if (secretBuffer.indexOf('star') !== -1) {
+    secretBuffer = '';
+    showToast('Айдана, ты моя звезда!');
+    for (var i = 0; i < 15; i++) {
+      (function(idx) {
+        setTimeout(function() {
+          var s = document.createElement('div');
+          s.className = 'star';
+          s.innerHTML = '&#9733;';
+          s.style.left = (Math.random()*100) + '%';
+          s.style.top = (Math.random()*100) + '%';
+          s.style.fontSize = (14 + Math.random()*20) + 'px';
+          s.style.position = 'fixed';
+          document.body.appendChild(s);
+          setTimeout(function() { s.remove(); }, 4000);
+        }, idx * 100);
+      })(i);
+    }
+  }
+});
+
+// ===== ОТСЫЛКИ =====
+var loveMessages = [
+  'Я тебя люблю, Айдана!',
+  'Айдана, ты самая лучшая!',
+  'Айдана, ты моё счастье!',
+  'Каждый день с тобой - подарок, Айдана!',
+  'Айдана, ты лучшее, что случилось в моей жизни!',
+  'Люблю тебя больше всех на свете, Айдана!',
+  'Айдана, ты делаешь мир ярче!'
+];
+
+function updateLoveBanner() {
+  var el = document.getElementById('love-banner');
+  if (el) {
+    var msg = loveMessages[Math.floor(Math.random() * loveMessages.length)];
+    el.innerHTML = '<span>' + msg + '</span>';
+  }
+}
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+loadData();
+refreshAll();
+updateLoveBanner();
+setInterval(updateLoveBanner, 10000);
+
+// Загрузить настройки синхронизации
+if (data.syncServer) document.getElementById('sync-server').value = data.syncServer;
+if (data.syncId) document.getElementById('sync-id').value = data.syncId;
+
+</script>
+<div class="love-footer">Made with love for Aidana</div>
+</body>
+</html>
