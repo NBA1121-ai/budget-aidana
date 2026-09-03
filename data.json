@@ -17,56 +17,7 @@
     "Расходы на Любимого",
     "Прочее"
   ],
-  "transactions": [
-    {
-      "id": 1788437052373.5024,
-      "type": "income",
-      "category": "Зарплата",
-      "amount": 80000,
-      "date": "2026-09-03",
-      "description": ""
-    },
-    {
-      "id": 1788437063413.3933,
-      "type": "expense",
-      "category": "Еда",
-      "amount": 5000,
-      "date": "2026-09-03",
-      "description": ""
-    },
-    {
-      "id": 1788437436654.331,
-      "type": "income",
-      "category": "Зарплата",
-      "amount": 50000,
-      "date": "2026-09-03",
-      "description": ""
-    },
-    {
-      "id": 1788437444664.4854,
-      "type": "expense",
-      "category": "Еда",
-      "amount": 20000,
-      "date": "2026-09-03",
-      "description": ""
-    },
-    {
-      "id": 1788437454694.2917,
-      "type": "income",
-      "category": "Зарплата",
-      "amount": 1000,
-      "date": "2026-09-03",
-      "description": "А"
-    },
-    {
-      "id": 1788437460110.6956,
-      "type": "expense",
-      "category": "Еда",
-      "amount": 500,
-      "date": "2026-09-03",
-      "description": "Б"
-    }
-  ],
+  "transactions": [],
   "limits": {},
   "currency": "сом"
 }
