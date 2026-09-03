@@ -33,6 +33,14 @@
       "amount": 5000,
       "date": "2026-09-03",
       "description": ""
+    },
+    {
+      "id": 1788437436654.331,
+      "type": "income",
+      "category": "Зарплата",
+      "amount": 50000,
+      "date": "2026-09-03",
+      "description": ""
     }
   ],
   "limits": {},
