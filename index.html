@@ -894,37 +894,39 @@ tr:hover td { background: var(--surface2); }
   <!-- СИНХРОНИЗАЦИЯ -->
   <div id="page-sync" class="page">
     <div class="card">
-      <div class="card-title">Синхронизация между устройствами</div>
-      <p style="color:var(--text2);margin-bottom:16px;font-size:14px">
-        Экспортируйте данные на одном устройстве и импортируйте на другом, чтобы иметь общую базу.
+      <div class="card-title">Облачная синхронизация (GitHub)</div>
+      <p style="color:var(--text2);margin-bottom:12px;font-size:14px">
+        Данные автоматически сохраняются в GitHub. Откройте этот сайт с любого устройства — данные будут общие.
       </p>
+      <div id="sync-status" style="margin-bottom:12px"></div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="exportData()">Экспорт данных</button>
-        <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Импорт данных</button>
-        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
+        <button class="btn btn-primary" onclick="githubPull()">Обновить с сервера</button>
+        <button class="btn btn-success" onclick="githubPush()">Сохранить на сервер</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Облачная синхронизация (опционально)</div>
-      <p style="color:var(--text2);margin-bottom:16px;font-size:14px">
-        Введите общий ID для автоматической синхронизации между устройствами через сервер.
-        Используйте одинаковый ID на всех устройствах.
+      <div class="card-title">Токен GitHub</div>
+      <p style="color:var(--text2);margin-bottom:12px;font-size:14px">
+        Токен нужен для сохранения данных. Введите один раз на каждом устройстве.
       </p>
-      <div class="form-row">
+      <div class="form-row single">
         <div class="form-group">
-          <label>URL сервера синхронизации</label>
-          <input type="text" id="sync-server" placeholder="https://your-server.com/api/sync" />
-        </div>
-        <div class="form-group">
-          <label>ID синхронизации</label>
-          <input type="text" id="sync-id" placeholder="my-budget-2024" />
+          <label>GitHub Token</label>
+          <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" />
         </div>
       </div>
       <div class="btn-group" style="margin-top:8px">
-        <button class="btn btn-primary" onclick="cloudSync('push')">Отправить на сервер</button>
-        <button class="btn btn-outline" onclick="cloudSync('pull')">Загрузить с сервера</button>
-        <button class="btn btn-outline" onclick="saveSyncSettings()">Сохранить настройки</button>
+        <button class="btn btn-primary" onclick="saveToken()">Сохранить токен</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Экспорт / Импорт (резервная копия)</div>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="exportData()">Экспорт JSON</button>
+        <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Импорт JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
       </div>
     </div>
 
@@ -993,29 +995,48 @@ tr:hover td { background: var(--surface2); }
 <script>
 
 // ===== ДАННЫЕ =====
+var GITHUB_REPO = 'NBA1121-ai/budget-aidana';
+var GITHUB_FILE = 'data.json';
+var fileSha = null;
+var syncInProgress = false;
+
 var defaultData = {
   incomeCategories: ['Зарплата', 'Комиссии', 'Прочее'],
   expenseCategories: ['Еда', 'Транспорт', 'Жилье', 'Коммунальные', 'Связь', 'Одежда', 'Здоровье', 'Развлечения', 'Образование', 'Расходы на Любимого', 'Прочее'],
   transactions: [],
   limits: {},
-  currency: 'сом',
-  syncServer: '',
-  syncId: ''
+  currency: 'сом'
 };
 
 var data = {};
 var editingId = null;
+
+function getToken() {
+  return localStorage.getItem('gh_token') || '';
+}
+
+function saveToken() {
+  var token = document.getElementById('gh-token').value.trim();
+  if (!token) { showToast('Введите токен'); return; }
+  localStorage.setItem('gh_token', token);
+  showToast('Токен сохранён');
+  githubPull();
+}
+
+function fixData() {
+  if (!data.incomeCategories) data.incomeCategories = defaultData.incomeCategories.slice();
+  if (!data.expenseCategories) data.expenseCategories = defaultData.expenseCategories.slice();
+  if (!data.transactions) data.transactions = [];
+  if (!data.limits) data.limits = {};
+  if (!data.currency) data.currency = 'сом';
+}
 
 function loadData() {
   try {
     var saved = localStorage.getItem('budget_app_data');
     if (saved) {
       data = JSON.parse(saved);
-      if (!data.incomeCategories) data.incomeCategories = defaultData.incomeCategories.slice();
-      if (!data.expenseCategories) data.expenseCategories = defaultData.expenseCategories.slice();
-      if (!data.transactions) data.transactions = [];
-      if (!data.limits) data.limits = {};
-      if (!data.currency) data.currency = 'сом';
+      fixData();
     } else {
       data = JSON.parse(JSON.stringify(defaultData));
     }
@@ -1026,6 +1047,112 @@ function loadData() {
 
 function saveData() {
   localStorage.setItem('budget_app_data', JSON.stringify(data));
+  // Автосохранение в GitHub (с задержкой чтобы не спамить)
+  clearTimeout(saveData._timer);
+  saveData._timer = setTimeout(function() { githubPush(); }, 2000);
+}
+
+function updateSyncStatus(msg, color) {
+  var el = document.getElementById('sync-status');
+  if (el) el.innerHTML = '<div style="padding:8px 12px;background:var(--surface2);border-radius:8px;font-size:13px;color:' + (color||'var(--text2)') + '">' + msg + '</div>';
+}
+
+// ===== GITHUB API =====
+function githubPull() {
+  var token = getToken();
+  if (!token) {
+    updateSyncStatus('Токен не указан. Перейдите в Синхронизация и введите токен.', 'var(--yellow)');
+    return;
+  }
+  syncInProgress = true;
+  updateSyncStatus('Загрузка данных...', 'var(--blue)');
+
+  fetch('https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + GITHUB_FILE, {
+    headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
+  })
+  .then(function(r) {
+    if (r.status === 404) {
+      // Файл ещё не создан - первый запуск
+      updateSyncStatus('Первый запуск. Данные будут сохранены при первом изменении.', 'var(--text2)');
+      syncInProgress = false;
+      return null;
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(result) {
+    if (!result) return;
+    fileSha = result.sha;
+    var content = atob(result.content.replace(/\n/g, ''));
+    // Декодируем UTF-8
+    var decoded = decodeURIComponent(escape(content));
+    data = JSON.parse(decoded);
+    fixData();
+    localStorage.setItem('budget_app_data', JSON.stringify(data));
+    refreshAll();
+    var now = new Date();
+    var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    updateSyncStatus('Данные загружены (' + timeStr + ')', 'var(--green)');
+    syncInProgress = false;
+  })
+  .catch(function(e) {
+    updateSyncStatus('Ошибка загрузки: ' + e.message, 'var(--red)');
+    syncInProgress = false;
+  });
+}
+
+function githubPush() {
+  var token = getToken();
+  if (!token || syncInProgress) return;
+  syncInProgress = true;
+
+  // Сначала получаем актуальный SHA
+  fetch('https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + GITHUB_FILE, {
+    headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
+  })
+  .then(function(r) {
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(result) {
+    if (result) fileSha = result.sha;
+
+    var jsonStr = JSON.stringify(data, null, 2);
+    // Кодируем UTF-8 в base64
+    var encoded = btoa(unescape(encodeURIComponent(jsonStr)));
+
+    var body = {
+      message: 'Update budget data',
+      content: encoded
+    };
+    if (fileSha) body.sha = fileSha;
+
+    return fetch('https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + GITHUB_FILE, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + token,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(result) {
+    fileSha = result.content.sha;
+    var now = new Date();
+    var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    updateSyncStatus('Сохранено (' + timeStr + ')', 'var(--green)');
+    syncInProgress = false;
+  })
+  .catch(function(e) {
+    updateSyncStatus('Ошибка сохранения: ' + e.message, 'var(--red)');
+    syncInProgress = false;
+  });
 }
 
 // ===== НАВИГАЦИЯ =====
@@ -1595,51 +1722,6 @@ function importData(event) {
   event.target.value = '';
 }
 
-function saveSyncSettings() {
-  data.syncServer = document.getElementById('sync-server').value;
-  data.syncId = document.getElementById('sync-id').value;
-  saveData();
-  showToast('Настройки синхронизации сохранены');
-}
-
-function cloudSync(action) {
-  var server = document.getElementById('sync-server').value;
-  var syncId = document.getElementById('sync-id').value;
-
-  if (!server || !syncId) {
-    showToast('Укажите URL сервера и ID синхронизации');
-    return;
-  }
-
-  var url = server.replace(/\/$/, '') + '/' + encodeURIComponent(syncId);
-
-  if (action === 'push') {
-    fetch(url, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data)
-    }).then(function(r) {
-      if (r.ok) showToast('Данные отправлены на сервер');
-      else showToast('Ошибка отправки: ' + r.status);
-    }).catch(function(e) { showToast('Ошибка подключения к серверу'); });
-  } else {
-    fetch(url).then(function(r) {
-      if (r.ok) return r.json();
-      throw new Error('HTTP ' + r.status);
-    }).then(function(d) {
-      data = d;
-      if (!data.incomeCategories) data.incomeCategories = defaultData.incomeCategories.slice();
-      if (!data.expenseCategories) data.expenseCategories = defaultData.expenseCategories.slice();
-      if (!data.transactions) data.transactions = [];
-      if (!data.limits) data.limits = {};
-      if (!data.currency) data.currency = 'сом';
-      saveData();
-      refreshAll();
-      showToast('Данные загружены с сервера');
-    }).catch(function(e) { showToast('Ошибка загрузки с сервера'); });
-  }
-}
-
 function clearAllData() {
   if (!confirm('Вы уверены? Все данные будут удалены!')) return;
   if (!confirm('Точно удалить ВСЕ данные? Это действие необратимо.')) return;
@@ -2004,9 +2086,15 @@ refreshAll();
 updateLoveBanner();
 setInterval(updateLoveBanner, 10000);
 
-// Загрузить настройки синхронизации
-if (data.syncServer) document.getElementById('sync-server').value = data.syncServer;
-if (data.syncId) document.getElementById('sync-id').value = data.syncId;
+// Загрузить токен в поле если есть
+var savedToken = getToken();
+if (savedToken) {
+  document.getElementById('gh-token').value = savedToken;
+  // Автоподтягивание данных из GitHub при загрузке
+  githubPull();
+} else {
+  updateSyncStatus('Введите GitHub токен во вкладке Синхронизация для общей базы данных.', 'var(--yellow)');
+}
 
 </script>
 <div class="love-footer">Made with love for Aidana</div>
