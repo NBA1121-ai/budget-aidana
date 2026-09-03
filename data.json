@@ -41,6 +41,14 @@
       "amount": 50000,
       "date": "2026-09-03",
       "description": ""
+    },
+    {
+      "id": 1788437444664.4854,
+      "type": "expense",
+      "category": "Еда",
+      "amount": 20000,
+      "date": "2026-09-03",
+      "description": ""
     }
   ],
   "limits": {},
