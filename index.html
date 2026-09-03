@@ -1052,9 +1052,19 @@ function saveData() {
   saveData._timer = setTimeout(function() { githubPush(); }, 2000);
 }
 
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escapeAttr(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function updateSyncStatus(msg, color) {
   var el = document.getElementById('sync-status');
-  if (el) el.innerHTML = '<div style="padding:8px 12px;background:var(--surface2);border-radius:8px;font-size:13px;color:' + (color||'var(--text2)') + '">' + msg + '</div>';
+  if (el) el.innerHTML = '<div style="padding:8px 12px;background:var(--surface2);border-radius:8px;font-size:13px;color:' + (color||'var(--text2)') + '">' + escapeHtml(msg) + '</div>';
 }
 
 // ===== GITHUB API =====
@@ -1116,10 +1126,9 @@ function githubPush() {
     return r.json();
   })
   .then(function(result) {
-    if (result) fileSha = result.sha;
+    if (result && result.sha) fileSha = result.sha;
 
     var jsonStr = JSON.stringify(data, null, 2);
-    // Кодируем UTF-8 в base64
     var encoded = btoa(unescape(encodeURIComponent(jsonStr)));
 
     var body = {
@@ -1139,34 +1148,32 @@ function githubPush() {
     });
   })
   .then(function(r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (!r || !r.ok) throw new Error(r ? 'HTTP ' + r.status : 'Нет ответа');
     return r.json();
   })
   .then(function(result) {
-    fileSha = result.content.sha;
+    if (result && result.content) fileSha = result.content.sha;
     var now = new Date();
     var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
     updateSyncStatus('Сохранено (' + timeStr + ')', 'var(--green)');
     syncInProgress = false;
   })
   .catch(function(e) {
-    updateSyncStatus('Ошибка сохранения: ' + e.message, 'var(--red)');
+    updateSyncStatus('Ошибка сохранения: ' + (e.message || 'Неизвестная ошибка'), 'var(--red)');
     syncInProgress = false;
   });
 }
 
 // ===== НАВИГАЦИЯ =====
 function showPage(page) {
+  var pageEl = document.getElementById('page-' + page);
+  if (!pageEl) return;
+
   var pages = document.querySelectorAll('.page');
   for (var i = 0; i < pages.length; i++) pages[i].className = 'page';
-  document.getElementById('page-' + page).className = 'page active';
+  pageEl.className = 'page active';
 
   var btns = document.querySelectorAll('.nav-btn');
-  for (var i = 0; i < btns.length; i++) btns[i].className = 'nav-btn';
-  btns[Array.prototype.indexOf.call(btns, event.target) !== -1 ?
-    Array.prototype.indexOf.call(btns, event.target) : 0].className = 'nav-btn active';
-
-  // Найти кнопку по тексту
   for (var i = 0; i < btns.length; i++) {
     var txt = btns[i].textContent.toLowerCase();
     if ((page === 'dashboard' && txt.indexOf('дашборд') !== -1) ||
@@ -1393,6 +1400,7 @@ function setLimit() {
 }
 
 function deleteLimit(cat) {
+  if (!confirm('Удалить лимит для категории "' + cat + '"?')) return;
   delete data.limits[cat];
   saveData();
   refreshAll();
@@ -1563,8 +1571,8 @@ function refreshDashboard() {
     var t = recent[i];
     var cls = t.type === 'income' ? 'amount-in' : 'amount-out';
     var sign = t.type === 'income' ? '+' : '-';
-    html += '<tr><td>' + t.date + '</td><td><span class="badge badge-' + t.type + '">' + t.category + '</span></td>' +
-      '<td>' + (t.description || '—') + '</td><td class="' + cls + '">' + sign + fmt(t.amount) + '</td></tr>';
+    html += '<tr><td>' + escapeHtml(t.date) + '</td><td><span class="badge badge-' + t.type + '">' + escapeHtml(t.category) + '</span></td>' +
+      '<td>' + escapeHtml(t.description || '—') + '</td><td class="' + cls + '">' + sign + fmt(t.amount) + '</td></tr>';
   }
   tbody.innerHTML = html || '<tr><td colspan="4" class="empty"><div class="empty-text">Пока нет операций</div></td></tr>';
 }
@@ -1575,7 +1583,7 @@ function refreshIncome() {
   var html = '';
   for (var i = 0; i < sorted.length; i++) {
     var t = sorted[i];
-    html += '<tr><td>' + t.date + '</td><td>' + t.category + '</td><td>' + (t.description||'—') + '</td>' +
+    html += '<tr><td>' + escapeHtml(t.date) + '</td><td>' + escapeHtml(t.category) + '</td><td>' + escapeHtml(t.description||'—') + '</td>' +
       '<td class="amount-in">+' + fmt(t.amount) + '</td>' +
       '<td><button class="btn btn-outline btn-sm" onclick="editTransaction(' + t.id + ')" title="Редактировать">&#9998;</button> ' +
       '<button class="btn btn-outline btn-sm" onclick="deleteTransaction(' + t.id + ')" title="Удалить">&#10005;</button></td></tr>';
@@ -1589,7 +1597,7 @@ function refreshExpenses() {
   var html = '';
   for (var i = 0; i < sorted.length; i++) {
     var t = sorted[i];
-    html += '<tr><td>' + t.date + '</td><td>' + t.category + '</td><td>' + (t.description||'—') + '</td>' +
+    html += '<tr><td>' + escapeHtml(t.date) + '</td><td>' + escapeHtml(t.category) + '</td><td>' + escapeHtml(t.description||'—') + '</td>' +
       '<td class="amount-out">-' + fmt(t.amount) + '</td>' +
       '<td><button class="btn btn-outline btn-sm" onclick="editTransaction(' + t.id + ')" title="Редактировать">&#9998;</button> ' +
       '<button class="btn btn-outline btn-sm" onclick="deleteTransaction(' + t.id + ')" title="Удалить">&#10005;</button></td></tr>';
@@ -1622,8 +1630,8 @@ function applyFilters() {
     var sign = t.type === 'income' ? '+' : '-';
     var badge = t.type === 'income' ? 'badge-income' : 'badge-expense';
     var typeName = t.type === 'income' ? 'Приход' : 'Расход';
-    html += '<tr><td>' + t.date + '</td><td><span class="badge ' + badge + '">' + typeName + '</span></td>' +
-      '<td>' + t.category + '</td><td>' + (t.description||'—') + '</td>' +
+    html += '<tr><td>' + escapeHtml(t.date) + '</td><td><span class="badge ' + badge + '">' + typeName + '</span></td>' +
+      '<td>' + escapeHtml(t.category) + '</td><td>' + escapeHtml(t.description||'—') + '</td>' +
       '<td class="' + cls + '">' + sign + fmt(t.amount) + '</td>' +
       '<td><button class="btn btn-outline btn-sm" onclick="editTransaction(' + t.id + ')">&#9998;</button> ' +
       '<button class="btn btn-outline btn-sm" onclick="deleteTransaction(' + t.id + ')">&#10005;</button></td></tr>';
@@ -1647,11 +1655,11 @@ function refreshLimits() {
     var remaining = limit - spent;
     var pct = Math.min(spent / limit * 100, 100);
     var color = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--yellow)' : 'var(--green)';
-    html += '<tr><td>' + cat + '</td><td>' + fmt(limit) + '</td><td>' + fmt(spent) + '</td>' +
+    html += '<tr><td>' + escapeHtml(cat) + '</td><td>' + fmt(limit) + '</td><td>' + fmt(spent) + '</td>' +
       '<td style="color:' + color + '">' + fmt(remaining) + '</td>' +
       '<td style="width:150px"><div class="limit-progress"><div class="limit-progress-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
       '<div style="font-size:11px;color:var(--text2);margin-top:2px">' + Math.round(pct) + '%</div></td>' +
-      '<td><button class="btn btn-outline btn-sm" onclick="deleteLimit(\'' + cat.replace(/'/g, "\\'") + '\')">&#10005;</button></td></tr>';
+      '<td><button class="btn btn-outline btn-sm" onclick="deleteLimit(\'' + escapeAttr(cat).replace(/'/g, "\\'") + '\')">&#10005;</button></td></tr>';
   }
   document.getElementById('limits-list').innerHTML = html || '<tr><td colspan="6" class="empty"><div class="empty-text">Лимиты не установлены</div></td></tr>';
 }
@@ -1662,9 +1670,9 @@ function refreshConfig() {
   for (var i = 0; i < data.incomeCategories.length; i++) {
     var c = data.incomeCategories[i];
     html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
-      '<span style="flex:1">' + c + '</span>' +
-      '<button class="btn btn-outline btn-sm" onclick="editCategory(\'income\',\'' + c.replace(/'/g, "\\'") + '\')">&#9998;</button>' +
-      '<button class="btn btn-outline btn-sm" onclick="deleteCategory(\'income\',\'' + c.replace(/'/g, "\\'") + '\')">&#10005;</button></div>';
+      '<span style="flex:1">' + escapeHtml(c) + '</span>' +
+      '<button class="btn btn-outline btn-sm" onclick="editCategory(\'income\',\'' + escapeAttr(c).replace(/'/g, "\\'") + '\')">&#9998;</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="deleteCategory(\'income\',\'' + escapeAttr(c).replace(/'/g, "\\'") + '\')">&#10005;</button></div>';
   }
   document.getElementById('income-cats-list').innerHTML = html;
 
@@ -1673,9 +1681,9 @@ function refreshConfig() {
   for (var i = 0; i < data.expenseCategories.length; i++) {
     var c = data.expenseCategories[i];
     html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
-      '<span style="flex:1">' + c + '</span>' +
-      '<button class="btn btn-outline btn-sm" onclick="editCategory(\'expense\',\'' + c.replace(/'/g, "\\'") + '\')">&#9998;</button>' +
-      '<button class="btn btn-outline btn-sm" onclick="deleteCategory(\'expense\',\'' + c.replace(/'/g, "\\'") + '\')">&#10005;</button></div>';
+      '<span style="flex:1">' + escapeHtml(c) + '</span>' +
+      '<button class="btn btn-outline btn-sm" onclick="editCategory(\'expense\',\'' + escapeAttr(c).replace(/'/g, "\\'") + '\')">&#9998;</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="deleteCategory(\'expense\',\'' + escapeAttr(c).replace(/'/g, "\\'") + '\')">&#10005;</button></div>';
   }
   document.getElementById('expense-cats-list').innerHTML = html;
 }
@@ -2040,11 +2048,8 @@ saveEdit = function() {
   document.head.appendChild(link);
 })();
 
-// 18. Пасхалка: набрать "kiss" на клавиатуре
-// (добавляем в существующий обработчик)
-var origKeypress = null;
+// 18. Пасхалка: набрать "kiss", "heart", "star" на клавиатуре
 document.addEventListener('keypress', function(e) {
-  secretBuffer += '';
   if (secretBuffer.indexOf('kiss') !== -1) {
     secretBuffer = '';
     showToast('&#128139; Целую тебя, Айдана!');
