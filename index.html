@@ -1245,8 +1245,12 @@ function addTransaction(type) {
 }
 
 function deleteTransaction(id) {
-  if (!confirm('Удалить эту запись?')) return;
-  data.transactions = data.transactions.filter(function(t) { return t.id !== id; });
+  var t = data.transactions.find(function(t) { return t.id === id; });
+  if (!t) return;
+  var info = t.date + ' | ' + t.category + ' | ' + (t.type === 'income' ? '+' : '-') + t.amount;
+  if (!confirm('Удалить запись?\n\n' + info)) return;
+  if (!confirm('Вы точно уверены? Это действие нельзя отменить.')) return;
+  data.transactions = data.transactions.filter(function(tr) { return tr.id !== id; });
   saveData();
   refreshAll();
   showToast('Запись удалена');
@@ -1316,7 +1320,12 @@ function addCategory(type) {
 }
 
 function deleteCategory(type, name) {
-  if (!confirm('Удалить категорию "' + name + '"? Существующие записи сохранятся.')) return;
+  // Проверяем есть ли записи с этой категорией
+  var count = data.transactions.filter(function(t) { return t.category === name && t.type === type; }).length;
+  var msg = 'Удалить категорию "' + name + '"?';
+  if (count > 0) msg += '\n\nВнимание: ' + count + ' записей используют эту категорию!';
+  if (!confirm(msg)) return;
+  if (count > 0 && !confirm('Категория содержит записи. Точно удалить?')) return;
   var arr = type === 'income' ? data.incomeCategories : data.expenseCategories;
   var idx = arr.indexOf(name);
   if (idx !== -1) arr.splice(idx, 1);
@@ -1723,8 +1732,13 @@ function importData(event) {
 }
 
 function clearAllData() {
-  if (!confirm('Вы уверены? Все данные будут удалены!')) return;
-  if (!confirm('Точно удалить ВСЕ данные? Это действие необратимо.')) return;
+  if (!confirm('ВНИМАНИЕ! Вы собираетесь удалить ВСЕ данные бюджета!\n\nВсе записи, категории и лимиты будут стёрты навсегда.')) return;
+  if (!confirm('Это действие НЕОБРАТИМО. Вы точно уверены?')) return;
+  var password = prompt('Для подтверждения введите слово "УДАЛИТЬ":');
+  if (password !== 'УДАЛИТЬ') {
+    showToast('Очистка отменена. Неверное слово подтверждения.');
+    return;
+  }
   data = JSON.parse(JSON.stringify(defaultData));
   saveData();
   refreshAll();
